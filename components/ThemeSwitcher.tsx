@@ -21,7 +21,7 @@ const ThemeSwitcher = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="shadow-none">
         <Button variant="outline">Theme: {theme}</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">

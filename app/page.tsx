@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 export default function Home() {
   return (
     <main className="w-full h-full flex flex-col items-center justify-center gap-8">
-      <div className="w-full h-full flex flex-col items-start justify-start gap-8 px-4 md:px-10 overflow-y-scroll">
+      <div className="w-full h-full flex flex-col items-start justify-start gap-8 px-4 md:px-10 overflow-y-scroll py-2">
         <section className="text-left w-full mt-6">
           <h1 className="text-4xl font-bold mb-4">Next Starter Kit</h1>
           <p className="text-lg text-muted-foreground">

@@ -33,5 +33,5 @@ export function ThemeProvider({
     })
   }
 
-  return <NextThemesProvider {...props} defaultTheme={`${theme}`}>{children}</NextThemesProvider>
+  return <NextThemesProvider {...props} defaultTheme={theme}>{children}</NextThemesProvider>
 }
