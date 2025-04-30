@@ -5,12 +5,11 @@ import type { NextRequest } from "next/server";
 
 // Optional: define secret or get from env
 const secret = process.env.AUTH_SECRET;
-const protectedPrefixes = ["/docs", "/admin"];
+const protectedPrefixes = ["/dashboard"];
 
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret });
   
-  console.log(token, "token")
   const isAuth = !!token;
   const isProtectedRoute = protectedPrefixes.some((prefix) =>
     req.nextUrl.pathname.startsWith(prefix)
@@ -24,5 +23,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/docs/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*"],
 };
