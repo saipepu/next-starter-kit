@@ -1,14 +1,9 @@
 "use client";
 
 import {
-  Calendar,
   CloudDownload,
-  Home,
   Image,
-  Inbox,
   LayoutDashboard,
-  Search,
-  Settings,
   Sparkle,
   SunMoon,
   UserLock,
@@ -37,26 +32,6 @@ const items = [
     title: "Dashboard",
     url: "/docs/dashboard",
     icon: LayoutDashboard,
-  },
-  {
-    title: "Theme",
-    url: "/docs/theme",
-    icon: SunMoon,
-  },
-  {
-    title: "Auth",
-    url: "/docs/auth",
-    icon: UserLock,
-  },
-  {
-    title: "Image Upload",
-    url: "/docs/image-upload",
-    icon: Image,
-  },
-  {
-    title: "Deployment",
-    url: "/docs/deployment",
-    icon: CloudDownload,
   },
 ];
 
