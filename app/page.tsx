@@ -1,26 +1,51 @@
 "use client";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { useState } from "react";
 
 export default function Home() {
+  const { data: session } = useSession();
+  const [credentials, setCredentials] = useState({
+    username: "",
+    password: "",
+  });
   return (
-    <main className="w-full h-full flex flex-col items-center justify-center gap-8">
-      <div className="w-full h-full flex flex-col items-start justify-start gap-8 px-4 md:px-10 overflow-y-scroll py-2">
-        <section className="text-left w-full mt-6">
-          <h1 className="text-4xl font-bold mb-4">Next Starter Kit</h1>
-          <p className="text-lg text-muted-foreground">
-            Jumpstart your Next.js app with built-in authentication, theme configuration,
-            and secure session management using cookies.
+    <main className="w-full h-screen flex items-center justify-center bg-muted">
+      <div className="w-full max-w-xs md:max-w-sm p-8 bg-background border border-border rounded-lg shadow-md space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Welcome</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Sign in to your account
           </p>
-        </section>
-        <Separator className="w-full max-w-full" />
-        <section className="text-left w-full">
-          <h2 className="text-2xl font-bold mb-4">Theme Switcher</h2>
-          <p className="text-lg text-muted-foreground mb-4">
-            Use the theme switcher below to toggle between light and dark modes:
-          </p>
-          <ThemeSwitcher />
-        </section>
+        </div>
+
+        {session ? (
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mt-1">
+              You are signed in as {session.user?.email}
+            </p>
+            <Button
+              variant="default"
+              className="w-full mt-4"
+              onClick={() => (window.location.href = "/dashboard")}
+            >
+              Go to Dashboard
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={() => signIn("google")}
+            >
+              Sign in with Google
+            </Button>
+          </div>
+        )}
       </div>
     </main>
   );
