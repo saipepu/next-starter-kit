@@ -5,6 +5,7 @@ export enum AuthMethods {
 
 export type SignInRequestDto = {
   method: AuthMethods.Google;
+  email?: string;
   providerToken: string
 } | {
   method: AuthMethods.Credentials;

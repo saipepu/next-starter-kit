@@ -9,44 +9,10 @@ type ErrorResponse = {
   errorTitle: string
 }
 
-// Token refresh lock to prevent concurrent refreshes
-class TokenRefreshLock {
-  private refreshPromise: Promise<void> | null = null
-  private isRefreshing = false
-
-  async acquireLock(refreshFn: () => Promise<void>): Promise<void> {
-    // If already refreshing, wait for it
-    if (this.isRefreshing && this.refreshPromise) {
-      console.log("⏳ Token refresh already in progress, waiting...")
-      await this.refreshPromise
-      return
-    }
-
-    // Start new refresh
-    console.log("🔄 Starting token refresh...")
-    this.isRefreshing = true
-
-    this.refreshPromise = refreshFn()
-      .then(() => {
-        console.log("✅ Token refresh successful")
-      })
-      .catch((error) => {
-        console.log("❌ Token refresh failed:", error.message)
-        throw error
-      })
-      .finally(() => {
-        // Use setTimeout to ensure all waiting requests see the new token
-        setTimeout(() => {
-          this.isRefreshing = false
-          this.refreshPromise = null
-        }, 100)
-      })
-
-    await this.refreshPromise
-  }
+export type DefaultApiResponse = {
+  success: boolean
+  message: any
 }
-
-const tokenRefreshLock = new TokenRefreshLock()
 
 // Helper functions
 const getErrorTitle = (statusCode: number): string => {
@@ -120,7 +86,7 @@ const makeApiCall = async <T>(
 
         // Retry original request only once
         return makeApiCall<T>(endpoint, options, false)
-      } catch (refreshError: any) {
+      } catch (refreshError: any) { 
         throw new Error("Session expired")
       }
     }

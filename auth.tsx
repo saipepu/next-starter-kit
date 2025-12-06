@@ -8,8 +8,9 @@ import {
   AuthMethods,
   SignInRequestDto,
   SignInResponseDto,
-} from "./domain/models/AuthModel"
-import { postRequest } from "./domain/api/NetworkManager"
+} from "./lib/domain/models/AuthModel"
+import { postRequest } from "./lib/domain/api/NetworkManager"
+import admins from '@/lib/domain/mock-data/admins.json'
 
 declare module "next-auth" {
   interface Session {
@@ -76,6 +77,18 @@ async function SignIn(signInDto: SignInRequestDto): Promise<SignInResponseDto> {
 
 async function MockSignIn(signInDto: SignInRequestDto): Promise<SignInResponseDto> {
   console.log("Mock sign in")
+
+  if(admins.find(admin => admin.email === signInDto.email) === undefined) {
+    return {
+      success: false,
+      message: {
+        access_token: "",
+        refresh_token: "",
+        access_token_expires_in: 0,
+      },
+    }
+  }
+
   return {
     success: true,
     message: {
@@ -129,6 +142,7 @@ export const { handlers } = NextAuth({
     async signIn({ user, account, credentials }) {
       let signInDto: SignInRequestDto = {
         method: AuthMethods.Google,
+        email: user.email || "",
         providerToken: account?.access_token || "",
       }
       const response = await MockSignIn(signInDto)

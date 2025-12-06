@@ -1,5 +1,5 @@
 "use client"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/lib/components/common/button"
 import { LogOut } from "lucide-react"
 import { signIn, signOut, useSession } from "next-auth/react"
 import Image from "next/image"

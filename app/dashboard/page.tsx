@@ -1,5 +1,5 @@
 "use client"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/lib/components/common/button"
 import { signOut } from "next-auth/react"
 import React from "react"
 

@@ -8,9 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "./ui/button";
+} from "@/lib/components/common/dropdown-menu"
 import React from "react";
+import { Button } from "./common/button";
 
 const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme();
