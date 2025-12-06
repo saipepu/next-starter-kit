@@ -50,7 +50,6 @@ const providers = [
       password: { label: "Password", type: "password" },
     },
     async authorize(credentials, req) {
-      console.log("authorize", { credentials, req })
       // You can add your own logic here to validate the credentials
       if (credentials?.username === "admin" && credentials?.password === "admin") {
         return {

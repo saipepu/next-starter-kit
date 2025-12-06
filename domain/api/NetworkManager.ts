@@ -99,7 +99,6 @@ const makeApiCall = async <T>(
 
   if (options.headers && !("Authorization" in options.headers)) {
     const token = session?.accessToken
-    console.log("token", token)
     if (token) {
       ;(options.headers as any)["Authorization"] = `Bearer ${token}`
     }

@@ -37,7 +37,6 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  console.log(pathname);
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">

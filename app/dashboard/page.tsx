@@ -1,14 +1,9 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { signOut, useSession } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import React from "react"
 
 const DocsIntro = () => {
-  const { data: session } = useSession()
-  console.log("DocsIntro session", session)
-  console.log(session?.user?.accessToken)
-  console.log(session?.user?.refreshToken)
-
   return (
     <div className="w-full min-h-full">
       <h1 className="text-4xl font-bold mt-5">Introduction</h1>
