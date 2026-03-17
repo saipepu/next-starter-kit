@@ -3,34 +3,48 @@ import "next-auth/jwt"
 import GitHub from "next-auth/providers/github"
 import Google from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { JWT } from "next-auth/jwt"
-import {
-  AuthMethods,
-  SignInRequestDto,
-  SignInResponseDto,
-} from "./lib/domain/models/AuthModel"
-import { postRequest } from "./lib/domain/api/NetworkManager"
-import admins from '@/lib/domain/mock-data/admins.json'
+
+type LegalDocumentType = "PrivacyPolicy" | "TermsOfService"
+
+export interface AcceptedLegalDocument {
+  type: LegalDocumentType
+  version: number
+}
+
+export interface LocalLoginDTO {
+  username: string
+  password: string
+}
+
+export interface ProviderLoginDTO {
+  provider_id_token: string
+}
+
+export interface SignInDTO {
+  provider: "Google" | "GitHub" | "Local"
+  local_login_dto?: LocalLoginDTO
+  provider_login_dto?: ProviderLoginDTO
+  accepted_legal_documents?: AcceptedLegalDocument[]
+}
+
+enum AuthProviders {
+  GOOGLE = "google",
+  GITHUB = "github",
+  CREDENTIALS = "credentials",
+}
 
 declare module "next-auth" {
   interface Session {
     accessToken?: string
-    error: string | undefined
-    refreshToken?: string
   }
   interface User {
     accessToken?: string
-    refreshToken?: string
-    accessTokenExpiresIn?: number
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string
-    refreshToken?: string
-    accessTokenExpiresIn?: number
-    error?: string
   }
 }
 
@@ -51,6 +65,7 @@ const providers = [
       password: { label: "Password", type: "password" },
     },
     async authorize(credentials, req) {
+      console.log("authorize", { credentials, req })
       // You can add your own logic here to validate the credentials
       if (credentials?.username === "admin" && credentials?.password === "admin") {
         return {
@@ -63,124 +78,71 @@ const providers = [
   }),
 ]
 
-async function SignIn(signInDto: SignInRequestDto): Promise<SignInResponseDto> {
-  let response: SignInResponseDto = await postRequest<SignInResponseDto>(
-    "/auth",
-    signInDto
-  )
-
-  return {
-    success: response?.success || false,
-    message: response?.message || {},
-  }
-}
-
-async function MockSignIn(signInDto: SignInRequestDto): Promise<SignInResponseDto> {
-  console.log("Mock sign in")
-
-  if(admins.find(admin => admin.email === signInDto.email) === undefined) {
-    return {
-      success: false,
-      message: {
-        access_token: "",
-        refresh_token: "",
-        access_token_expires_in: 0,
-      },
-    }
-  }
-
-  return {
-    success: true,
-    message: {
-      access_token: "mock_access_token_123",
-      refresh_token: "mock_refresh_token_123",
-      access_token_expires_in: 5,
-    },
-  }
-}
-
-async function refreshAccessToken(token: JWT): Promise<JWT> {
-  console.log("Refreshing access token...")
-  try {
-    const res = await postRequest<any>("/auth/renew-access-token", {
-      refresh_token: token.refreshToken,
-    })
-
-    const data = await res.json()
-
-    if (!data?.success) {
-      throw new Error("Failed to refresh access token")
-    }
-
-    return {
-      ...token,
-      accessToken: data.message.access_token,
-      refreshToken: data.message.refresh_token ?? token.refreshToken,
-      accessTokenExpiresIn: data.message.access_token_expires_in, // 1h
-    }
-  } catch (err) {
-    console.error("Refresh token error:", err)
-    return { ...token, error: "RefreshAccessTokenError" }
-  }
-}
-
-async function MockRefreshAccessToken(token: JWT): Promise<JWT> {
-  console.log("Mock refresh access token")
-
-  return {
-    ...token,
-    accessToken: `mock_access_token_refreshed_${Math.floor(Math.random() * 1000)}`,
-    refreshToken: "mock_refresh_token_refreshed_789",
-    accessTokenExpiresIn: new Date().getTime() + 10 * 1000, // 10 seconds
-  }
-}
-
 export const { handlers } = NextAuth({
   providers: providers,
-  session: { strategy: "jwt" as const },
+  session: { strategy: "jwt" as const, maxAge: 15 * 60 }, // 15 minutes
+  secret: process.env.NEXT_PUBLIC_AUTH_SECRET,
   callbacks: {
-    async signIn({ user, account, credentials }) {
-      let signInDto: SignInRequestDto = {
-        method: AuthMethods.Google,
-        email: user.email || "",
-        providerToken: account?.access_token || "",
+    async signIn({ user, account, profile, email, credentials }) {
+      // console.log("signIn", { user, account, profile, email, credentials })
+      console.log("SignIn: user", user)
+
+      let signInDto: SignInDTO = {
+        provider:
+          account?.provider == AuthProviders.GOOGLE
+            ? "Google"
+            : account?.provider == AuthProviders.GITHUB
+              ? "GitHub"
+              : "Local",
+        provider_login_dto:
+          account?.provider != AuthProviders.CREDENTIALS
+            ? {
+                provider_id_token:
+                  (account?.id_token as string) || (account?.access_token as string),
+              }
+            : undefined,
+        accepted_legal_documents: [
+          {
+            type: "PrivacyPolicy",
+            version: 1,
+          },
+        ],
       }
-      const response = await MockSignIn(signInDto)
+
+      // system auth
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/admin-sign-in`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(signInDto),
+        },
+      )
+        .then((res) => res.json())
+        .catch((err) => {
+          console.error("Auth error", err)
+          return null
+        })
+
+      console.log("auth response", response)
 
       if (response?.success && response?.message.access_token) {
         user.accessToken = response.message.access_token
-        user.refreshToken = response.message.refresh_token
-        user.accessTokenExpiresIn =
-          Date.now() + response.message.access_token_expires_in * 1000
         return true
       }
-
       return false
     },
-    async jwt({ token, user }) {
-      // First pass: after OAuth
-      if (user) {
+    async jwt({ token, user, account }) {
+      if (user?.accessToken) {
         token.accessToken = user.accessToken
-        token.refreshToken = user.refreshToken
-        token.accessTokenExpiresIn = user.accessTokenExpiresIn
-        return token
       }
-
-      const isExpired = Date.now() > (token.accessTokenExpiresIn as number)
-
-      if (!isExpired) {
-        return token
-      }
-
-      const tk = await MockRefreshAccessToken(token)
-      console.log("Refreshed token:", tk)
-      return tk
+      return token
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.accessToken = token.accessToken as string
-        session.error = token.error as string | undefined
-        session.refreshToken = token.refreshToken as string
       }
       return session
     },
